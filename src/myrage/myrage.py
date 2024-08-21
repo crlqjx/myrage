@@ -71,7 +71,7 @@ class Myrage:
         self.ip_info = r.json()
         logger.log.info(f"proxy info: {self.ip_info}")
 
-    def __exit__(self):
+    def stop(self):
         for proc in psutil.process_iter():
             if proc.name() == 'tor':
                 proc.terminate()
