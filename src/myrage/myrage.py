@@ -10,26 +10,44 @@ from requests import Session
 from requests.adapters import Retry, HTTPAdapter
 
 
-from src.myrage import logger
+from myrage import (
+    logger,
+    CONTROL_PORT,
+    SOCKS_PORT,
+    GEO_IP_FILE,
+    GEO_IP_V6_FILE,
+    EXIT_NODES,
+    STRICT_NODES,
+    TOR_CMD_PATH
+)
 
 
 class Myrage:
     request_counter = 0
 
-    def __init__(self):
+    def __init__(
+        self,
+        control_port: int = CONTROL_PORT,
+        socks_port: int = SOCKS_PORT,
+        geo_ip_file: str = GEO_IP_FILE,
+        geo_ip_v6_file: str = GEO_IP_V6_FILE,
+        exit_nodes: str = EXIT_NODES,
+        strict_nodes: int = STRICT_NODES,
+        tor_cmd_path: str = TOR_CMD_PATH
+    ):
         self._check_existing_tor_processes()
         self._tor_process = launch_tor_with_config(
             config={
-                "ControlPort": os.environ["CONTROL_PORT"],
-                "SocksPort": os.environ["SOCKS_PORT"],
-                "GeoIPFile": os.environ["GEO_IP_FILE"],
-                "GeoIPv6File": os.environ["GEO_IP_V6_FILE"],
-                "ExitNodes": os.environ["EXIT_NODES"],
-                "StrictNodes": os.environ["STRICT_NODES"],
+                "ControlPort": str(control_port),
+                "SocksPort": str(socks_port),
+                "GeoIPFile": geo_ip_file,
+                "GeoIPv6File": geo_ip_v6_file,
+                "ExitNodes": exit_nodes,
+                "StrictNodes": str(strict_nodes),
             },
-            tor_cmd=os.environ["TOR_CMD_PATH"],
+            tor_cmd=tor_cmd_path,
         )
-        self._controller = Controller.from_port(port=int(os.environ["CONTROL_PORT"]))
+        self._controller = Controller.from_port(port=control_port)
         self._controller.authenticate()
         self._session = Session()
         self._session.headers = {
