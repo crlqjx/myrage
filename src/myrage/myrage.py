@@ -1,6 +1,5 @@
 import psutil
 import time
-import os
 
 from stem.process import launch_tor_with_config
 from stem.control import Controller
@@ -54,18 +53,20 @@ class Myrage:
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 "
             "(HTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
         }
-        self._session.mount('http://', adapter=HTTPAdapter(max_retries=Retry(total=10, backoff_factor=2)))
+        self._session.mount(
+            "http://",
+            adapter=HTTPAdapter(max_retries=Retry(total=10, backoff_factor=2)),
+        )
         self._session.proxies = {
-            'http': 'socks5h://127.0.0.1:9051',
-            'https': 'socks5h://127.0.0.1:9051'
+            "http": "socks5h://127.0.0.1:9051",
+            "https": "socks5h://127.0.0.1:9051",
         }
 
         self.ip_info = None
 
-
     @property
     def session(self):
-        return self._session()
+        return self._session
 
     def _check_existing_tor_processes(self):
         """Check and kill existing tor processes before starting one"""
@@ -74,6 +75,9 @@ class Myrage:
             try:
                 if proc.name() == "tor":
                     # proc.kill()
+                    logger.log.warning(
+                        f"Trying to terminate an already existing Tor process: process id: {proc.pid} - process name: {proc.name} - user: {proc.username()}"
+                    )
                     proc.terminate()
                     break
             except psutil.NoSuchProcess as unknown_process_error:
@@ -89,9 +93,8 @@ class Myrage:
         self.ip_info = r.json()
         logger.log.info(f"proxy info: {self.ip_info}")
 
-    def stop(self):
+    def stop(self, kill: bool = False):
         for proc in psutil.process_iter():
-            if proc.name() == 'tor':
-                proc.terminate()
-
+            if proc.name() == "tor":
+                proc.terminate() if kill is False else proc.kill()
 
