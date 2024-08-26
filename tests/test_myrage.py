@@ -1,17 +1,13 @@
 import requests
 import psutil
 
-from src.myrage.myrage import Myrage
+from requests import Session
 
+from src.myrage.myrage import Myrage
 
 
 def test_myrage():
 
-    is_tor = False
-    for proc in psutil.process_iter():
-        if proc.name() == "tor":
-            is_tor = True
-    assert is_tor is False
 
     myrage = Myrage()
 
@@ -25,4 +21,8 @@ def test_myrage():
     myrage()
 
     assert current_ip_info['query'] != myrage.ip_info['query']
+    assert isinstance(myrage.session, Session)
+
+    myrage.stop()
+    del myrage
 
