@@ -21,8 +21,8 @@ def test_myrage():
     myrage()
 
     assert current_ip_info['query'] != myrage.ip_info['query']
+    assert current_ip_info['query'] == myrage.locale_ip_info['query']
     assert isinstance(myrage.session, Session)
 
     myrage.stop()
-    del myrage
 

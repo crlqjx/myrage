@@ -17,7 +17,7 @@ from myrage import (
     GEO_IP_V6_FILE,
     EXIT_NODES,
     STRICT_NODES,
-    TOR_CMD_PATH
+    TOR_CMD_PATH,
 )
 
 
@@ -32,7 +32,7 @@ class Myrage:
         geo_ip_v6_file: str = GEO_IP_V6_FILE,
         exit_nodes: str = EXIT_NODES,
         strict_nodes: int = STRICT_NODES,
-        tor_cmd_path: str = TOR_CMD_PATH
+        tor_cmd_path: str = TOR_CMD_PATH,
     ):
         self._check_existing_tor_processes()
         self._tor_process = launch_tor_with_config(
@@ -50,8 +50,9 @@ class Myrage:
         self._controller.authenticate()
         self._session = Session()
         self._session.headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 "
-            "(HTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) "
+            "AppleWebKit/537.36 (HTML, like Gecko) "
+            "Chrome/39.0.2171.95 Safari/537.36"
         }
         self._session.mount(
             "http://",
@@ -62,11 +63,17 @@ class Myrage:
             "https": "socks5h://127.0.0.1:9051",
         }
 
+        self.locale_ip_info = self._get_locale_ip_info()
         self.ip_info = None
 
     @property
     def session(self):
         return self._session
+
+    def _get_locale_ip_info(self):
+        """Store locale ip information"""
+        r = Session().get("http://ip-api.com/json")
+        return r.json()
 
     def _check_existing_tor_processes(self):
         """Check and kill existing tor processes before starting one"""
@@ -76,7 +83,10 @@ class Myrage:
                 if proc.name() == "tor":
                     # proc.kill()
                     logger.log.warning(
-                        f"Trying to terminate an already existing Tor process: process id: {proc.pid} - process name: {proc.name} - user: {proc.username()}"
+                        "Trying to terminate an already existing Tor process:"
+                        f" process id: {proc.pid} - "
+                        f"process name: {proc.name} - "
+                        f"user: {proc.username()}"
                     )
                     proc.terminate()
                     break
@@ -88,7 +98,7 @@ class Myrage:
 
         logger.log.info("Renewing tor IP")
         self._controller.signal(Signal.NEWNYM)
-        time.sleep(0.5)
+        time.sleep(1)
         r = self._session.get(r"http://ip-api.com/json")
         self.ip_info = r.json()
         logger.log.info(f"proxy info: {self.ip_info}")
@@ -97,4 +107,3 @@ class Myrage:
         for proc in psutil.process_iter():
             if proc.name() == "tor":
                 proc.terminate() if kill is False else proc.kill()
-
