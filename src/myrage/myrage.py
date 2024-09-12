@@ -18,13 +18,49 @@ from myrage import (
     EXIT_NODES,
     STRICT_NODES,
     TOR_CMD_PATH,
-)
 
+    PROXIES,
+
+    HEADERS
+)
 
 class Myrage:
     request_counter = 0
 
     def __init__(
+        self,
+        control_port: int = CONTROL_PORT,
+        socks_port: int = SOCKS_PORT,
+        geo_ip_file: str = GEO_IP_FILE,
+        geo_ip_v6_file: str = GEO_IP_V6_FILE,
+        exit_nodes: str = EXIT_NODES,
+        strict_nodes: int = STRICT_NODES,
+        tor_cmd_path: str = TOR_CMD_PATH,
+        use_tor: bool = True,
+    ):
+        self._session = Session()
+        self._session.headers = HEADERS
+        self._session.mount(
+            "http://",
+            adapter=HTTPAdapter(max_retries=Retry(total=10, backoff_factor=2)),
+        )
+
+        if use_tor is True:
+            self.__configure_tor_session(
+                control_port=control_port,
+                socks_port=socks_port,
+                exit_nodes=exit_nodes,
+                geo_ip_file=geo_ip_file,
+                geo_ip_v6_file=geo_ip_v6_file,
+                strict_nodes=strict_nodes,
+                tor_cmd_path=tor_cmd_path,
+            )
+
+    @property
+    def session(self):
+        return self._session
+
+    def __configure_tor_session(
         self,
         control_port: int = CONTROL_PORT,
         socks_port: int = SOCKS_PORT,
@@ -45,35 +81,23 @@ class Myrage:
                 "StrictNodes": str(strict_nodes),
             },
             tor_cmd=tor_cmd_path,
+            init_msg_handler = lambda line:logger.log.info(line)
         )
         self._controller = Controller.from_port(port=control_port)
         self._controller.authenticate()
-        self._session = Session()
-        self._session.headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) "
-            "AppleWebKit/537.36 (HTML, like Gecko) "
-            "Chrome/39.0.2171.95 Safari/537.36"
-        }
-        self._session.mount(
-            "http://",
-            adapter=HTTPAdapter(max_retries=Retry(total=10, backoff_factor=2)),
-        )
-        self._session.proxies = {
-            "http": "socks5h://127.0.0.1:9051",
-            "https": "socks5h://127.0.0.1:9051",
-        }
 
-        self.locale_ip_info = self._get_locale_ip_info()
-        self.ip_info = None
+        self._session.proxies = PROXIES
 
-    @property
-    def session(self):
-        return self._session
-
-    def _get_locale_ip_info(self):
+    def get_locale_ip_info(self):
         """Store locale ip information"""
         r = Session().get("http://ip-api.com/json")
         return r.json()
+
+    def get_ip_info(self):
+        """Store information about the IP that will be used in the session"""
+        r = self.session.get("http://ip-api.com/json")
+        return r.json()
+
 
     def _check_existing_tor_processes(self):
         """Check and kill existing tor processes before starting one"""
@@ -107,3 +131,8 @@ class Myrage:
         for proc in psutil.process_iter():
             if proc.name() == "tor":
                 proc.terminate() if kill is False else proc.kill()
+
+    def __del__(self):
+        logger.log.info("Deleting myrage controller and tor instances")
+        self._controller.close()
+        self._tor_process.kill()

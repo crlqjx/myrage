@@ -3,7 +3,7 @@ import psutil
 
 from requests import Session
 
-from src.myrage.myrage import Myrage
+from myrage.myrage import Myrage
 
 
 def test_myrage():
@@ -21,7 +21,7 @@ def test_myrage():
     myrage()
 
     assert current_ip_info['query'] != myrage.ip_info['query']
-    assert current_ip_info['query'] == myrage.locale_ip_info['query']
+    assert current_ip_info['query'] == myrage.get_locale_ip_info()['query']
     assert isinstance(myrage.session, Session)
 
     myrage.stop()
