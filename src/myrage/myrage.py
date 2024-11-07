@@ -1,3 +1,5 @@
+"""Single responsibility module to define the Myrage class"""
+
 import psutil
 import time
 
@@ -8,7 +10,6 @@ from stem import Signal
 from requests import Session
 from requests.adapters import Retry, HTTPAdapter
 
-
 from myrage import (
     logger,
     CONTROL_PORT,
@@ -18,14 +19,24 @@ from myrage import (
     EXIT_NODES,
     STRICT_NODES,
     TOR_CMD_PATH,
-
     PROXIES,
-
-    HEADERS
+    HEADERS,
 )
 
-class Myrage:
+
+class Myrage(Session):
+    """Class that will start a Tor process with passed parameters
+    IP address will be rolled when max requests will be reached
+
+    Attributes: 
+        request_counter (int): get and post requests counter
+        max_requests (int): number of requests allowed per IP
+        headers (dict): request headers
+        proxies (dict): socket proxies
+        ip_info (str): exit node ip
+    """
     request_counter = 0
+    max_requests = 100
 
     def __init__(
         self,
@@ -36,57 +47,78 @@ class Myrage:
         exit_nodes: str = EXIT_NODES,
         strict_nodes: int = STRICT_NODES,
         tor_cmd_path: str = TOR_CMD_PATH,
-        use_tor: bool = True,
     ):
-        self._session = Session()
-        self._session.headers = HEADERS
-        self._session.mount(
+
+        self._control_port = CONTROL_PORT
+        self._socks_port = SOCKS_PORT
+        self._geo_ip_file = GEO_IP_FILE
+        self._geo_ip_v6_file = GEO_IP_V6_FILE
+        self._exit_nodes = EXIT_NODES
+        self._strict_nodes = STRICT_NODES
+        self._tor_cmd_path = TOR_CMD_PATH
+
+        super().__init__()
+        self.headers = HEADERS
+        self.mount(
             "http://",
             adapter=HTTPAdapter(max_retries=Retry(total=10, backoff_factor=2)),
         )
 
-        if use_tor is True:
-            self.__configure_tor_session(
-                control_port=control_port,
-                socks_port=socks_port,
-                exit_nodes=exit_nodes,
-                geo_ip_file=geo_ip_file,
-                geo_ip_v6_file=geo_ip_v6_file,
-                strict_nodes=strict_nodes,
-                tor_cmd_path=tor_cmd_path,
-            )
+    def get(self, *args, **kwargs):
+        """Override get method to renew IP when max requests limit is reached
+            *args: args from get request
+            **kwargs: kwargs from get request
 
-    @property
-    def session(self):
-        return self._session
+        Returns:
+            get request response
+        """
+        self.request_counter += 1
+        if self.request_counter == self.max_requests:
+            self.renew_ip()
+            self.request_counter = 0
+        return super().get(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        """Override post method to renew IP when max requests limit is reached
+            *args: args from post request
+            **kwargs: kwargs from post request
+        
+        Returns:
+            post request response
+        """
+        self.request_counter += 1
+        if self.request_counter == self.max_requests:
+            self.renew_ip()
+            self.request_counter = 0
+        return super().get(*args, **kwargs)
 
     def __configure_tor_session(
         self,
-        control_port: int = CONTROL_PORT,
-        socks_port: int = SOCKS_PORT,
-        geo_ip_file: str = GEO_IP_FILE,
-        geo_ip_v6_file: str = GEO_IP_V6_FILE,
-        exit_nodes: str = EXIT_NODES,
-        strict_nodes: int = STRICT_NODES,
-        tor_cmd_path: str = TOR_CMD_PATH,
     ):
+        """Configure Tor with passed or default parameters"""
+
         self._check_existing_tor_processes()
         self._tor_process = launch_tor_with_config(
             config={
-                "ControlPort": str(control_port),
-                "SocksPort": str(socks_port),
-                "GeoIPFile": geo_ip_file,
-                "GeoIPv6File": geo_ip_v6_file,
-                "ExitNodes": exit_nodes,
-                "StrictNodes": str(strict_nodes),
+                "ControlPort": str(self._control_port),
+                "SocksPort": str(self._socks_port),
+                "GeoIPFile": self._geo_ip_file,
+                "GeoIPv6File": self._geo_ip_v6_file,
+                "ExitNodes": self._exit_nodes,
+                "StrictNodes": str(self._strict_nodes),
             },
-            tor_cmd=tor_cmd_path,
-            init_msg_handler = lambda line:logger.log.info(line)
+            tor_cmd=self._tor_cmd_path,
+            init_msg_handler=lambda line: logger.log.info(line),
         )
-        self._controller = Controller.from_port(port=control_port)
+        self._controller = Controller.from_port(port=self._control_port)
         self._controller.authenticate()
 
-        self._session.proxies = PROXIES
+        self.proxies = PROXIES
+
+
+        r = self.get(r"http://ip-api.com/json")
+        self.ip_info = r.json()
+        logger.log.info(f"proxy info: {self.ip_info}")
 
     def get_locale_ip_info(self):
         """Store locale ip information"""
@@ -95,9 +127,8 @@ class Myrage:
 
     def get_ip_info(self):
         """Store information about the IP that will be used in the session"""
-        r = self.session.get("http://ip-api.com/json")
+        r = self.get("http://ip-api.com/json")
         return r.json()
-
 
     def _check_existing_tor_processes(self):
         """Check and kill existing tor processes before starting one"""
@@ -117,22 +148,35 @@ class Myrage:
             except psutil.NoSuchProcess as unknown_process_error:
                 logger.log.warning(unknown_process_error)
 
-    def __call__(self):
-        """Renewing IP on call"""
-
+    def renew_ip(self):
+        """Renew IP """
+        
         logger.log.info("Renewing tor IP")
         self._controller.signal(Signal.NEWNYM)
         time.sleep(1)
-        r = self._session.get(r"http://ip-api.com/json")
+        r = self.get(r"http://ip-api.com/json")
         self.ip_info = r.json()
         logger.log.info(f"proxy info: {self.ip_info}")
 
+    def __call__(self):
+        """Configure tor"""
+        self.__configure_tor_session()
+
+
     def stop(self, kill: bool = False):
+        """Stop Tor process
+
+        Args:
+            kill: kill the process if true otherwise terminate it
+        """
+
         for proc in psutil.process_iter():
             if proc.name() == "tor":
                 proc.terminate() if kill is False else proc.kill()
 
     def __del__(self):
+        """Delete myrage controller and tor instances"""
+
         logger.log.info("Deleting myrage controller and tor instances")
         self._controller.close()
         self._tor_process.kill()
