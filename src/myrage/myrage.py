@@ -90,7 +90,7 @@ class Myrage(Session):
         if self.request_counter == self.max_requests:
             self.renew_ip()
             self.request_counter = 0
-        return super().get(*args, **kwargs)
+        return super().post(*args, **kwargs)
 
     def __configure_tor_session(
         self,
