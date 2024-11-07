@@ -159,8 +159,16 @@ class Myrage(Session):
         logger.log.info(f"proxy info: {self.ip_info}")
 
     def __call__(self):
-        """Configure tor"""
+
+        """Launch tor configuration
+
+        Returns:
+            Configured instance
+        """
+
         self.__configure_tor_session()
+
+        return self
 
 
     def stop(self, kill: bool = False):

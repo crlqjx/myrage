@@ -20,7 +20,7 @@ def test_myrage():
 
     current_ip_info = requests.get(r"http://ip-api.com/json").json() # locale ip
     
-    myrage()
+    assert isinstance(myrage(), Myrage)
 
     for proc in psutil.process_iter():
         if proc.name() == "tor":
