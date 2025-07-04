@@ -2,6 +2,7 @@
 
 import psutil
 import time
+import socket
 
 from stem.process import launch_tor_with_config
 from stem.control import Controller
@@ -9,6 +10,7 @@ from stem import Signal
 
 from requests import Session
 from requests.adapters import Retry, HTTPAdapter
+from urllib3.connection import HTTPConnection
 
 from myrage import (
     logger,

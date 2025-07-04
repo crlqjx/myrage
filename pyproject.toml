@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "myrage"
-version = "0.0.15"
+version = "0.0.17"
 description = "A simple class to instanciate a tor process and run http requests behind it"
 authors = [
 	{ name = "Cyril Quijoux" }
@@ -29,5 +29,5 @@ line-length = 88
 # Like Black, use double quotes for strings.
 quote-style = "double"
 
-[tools.setuptools]
-package-dir = {"" = "src"}
+[tool.setuptools.packages.find]
+where = ['src']
