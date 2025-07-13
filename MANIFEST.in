@@ -1,2 +1,2 @@
-include geoip
-include geoip6
+include src/myrage/geoip
+include src/myrage/geoip6

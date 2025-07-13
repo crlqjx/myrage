@@ -1,3 +1,5 @@
+import os
+
 from stem.process import launch_tor_with_config
 from stem.control import Controller
 from requests import Session
@@ -25,8 +27,8 @@ def test_tor_config():
     config = {
         "ControlPort": str(CONTROL_PORT),
         "SocksPort": str(SOCKS_PORT),
-        "GeoIPFile": GEO_IP_FILE,
-        "GeoIPv6File": GEO_IP_V6_FILE,
+        "GeoIPFile": os.path.abspath("./geoip"),
+        "GeoIPv6File": os.path.abspath("./geoip6"),
         "ExitNodes": EXIT_NODES,
         "StrictNodes": str(STRICT_NODES),
     }
