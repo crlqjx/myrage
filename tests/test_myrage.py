@@ -11,7 +11,7 @@ from myrage.myrage import Myrage
 def test_myrage():
 
 
-    myrage = Myrage()
+    myrage = Myrage(tor_cmd_path='tor')
     myrage.max_requests = 2
 
     assert isinstance(myrage, Session)

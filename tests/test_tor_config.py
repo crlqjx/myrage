@@ -7,11 +7,8 @@ from requests import Session
 from myrage import (
     CONTROL_PORT,
     SOCKS_PORT,
-    GEO_IP_FILE,
-    GEO_IP_V6_FILE,
     EXIT_NODES,
     STRICT_NODES,
-    TOR_CMD_PATH,
 
     PROXIES,
     HEADERS
@@ -23,21 +20,20 @@ from myrage import (
 def test_tor_config():
 
     locale_ip = Session().post('http://ip-api.com/json')
-    
+
     config = {
         "ControlPort": str(CONTROL_PORT),
         "SocksPort": str(SOCKS_PORT),
-        "GeoIPFile": os.path.abspath("./geoip"),
-        "GeoIPv6File": os.path.abspath("./geoip6"),
+        "GeoIPFile": os.path.abspath("./src/myrage/geoip"),
+        "GeoIPv6File": os.path.abspath("./src/myrage/geoip6"),
         "ExitNodes": EXIT_NODES,
         "StrictNodes": str(STRICT_NODES),
     }
     
-    tor_cmd = TOR_CMD_PATH
-    
     tor = launch_tor_with_config(
-        config, tor_cmd, take_ownership=True, init_msg_handler=lambda line: print(line)
+        config, 'tor', take_ownership=True, init_msg_handler=lambda line: print(line)
     )
+
     controller = Controller.from_port(port=CONTROL_PORT)
     controller.authenticate()
     

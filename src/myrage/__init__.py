@@ -4,7 +4,12 @@ from decolog.logger import Logger
 
 
 APP_NAME = "MYRAGE"
-LOG_PATH = "/var/log/myrage"
+LOG_PATH = os.path.join(
+        os.environ['HOME'],
+        ".local",
+        "share",
+        "myrage"
+        )
 
 TOR_CMD_PATH = "/usr/sbin/tor"
 CONTROL_PORT = 9050

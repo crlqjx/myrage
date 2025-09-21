@@ -51,13 +51,13 @@ class Myrage(Session):
         tor_cmd_path: str = TOR_CMD_PATH,
     ):
 
-        self._control_port = CONTROL_PORT
-        self._socks_port = SOCKS_PORT
-        self._geo_ip_file = GEO_IP_FILE
-        self._geo_ip_v6_file = GEO_IP_V6_FILE
-        self._exit_nodes = EXIT_NODES
-        self._strict_nodes = STRICT_NODES
-        self._tor_cmd_path = TOR_CMD_PATH
+        self._control_port = control_port
+        self._socks_port = socks_port
+        self._geo_ip_file = geo_ip_file
+        self._geo_ip_v6_file = geo_ip_v6_file
+        self._exit_nodes = exit_nodes
+        self._strict_nodes = strict_nodes
+        self._tor_cmd_path = tor_cmd_path
 
         super().__init__()
         self.headers = HEADERS
