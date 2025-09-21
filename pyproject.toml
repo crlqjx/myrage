@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "myrage"
-version = "0.0.18"
+version = "0.0.20"
 description = "A simple class to instanciate a tor process and run http requests behind it"
 authors = [
 	{ name = "Cyril Quijoux" }
@@ -17,6 +17,7 @@ dependencies = [
 	"requests[socks]",
 	"stem",
 	"psutil",
+	"decolog"
 ]
 
 [tool.ruff.lint]
