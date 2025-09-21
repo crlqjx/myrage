@@ -13,11 +13,11 @@ authors = [
 keywords = ['tor', 'requests', 'http', 'https']
 
 dependencies = [
-	"requests",
+	"requests==2.32.5",
 	"requests[socks]",
-	"stem",
-	"psutil",
-	"decolog"
+	"stem==1.8.2",
+	"psutil==7.0.0",
+	"decolog==0.0.5"
 ]
 
 [tool.ruff.lint]
