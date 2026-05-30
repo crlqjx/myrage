@@ -27,7 +27,7 @@ from myrage import (
 
 
 class Myrage(Session):
-    """Class that will start a Tor process with passed parameters
+    """Singleton class that will start a Tor process with passed parameters
     IP address will be rolled when max requests will be reached
 
     Attributes: 
@@ -37,8 +37,14 @@ class Myrage(Session):
         proxies (dict): socket proxies
         ip_info (str): exit node ip
     """
+    _instance = None
     request_counter = 0
     max_requests = 100
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls, *args, **kwargs)
+        return cls._instance
 
     def __init__(
         self,

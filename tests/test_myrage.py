@@ -44,5 +44,9 @@ def test_ip_rotation():
 
         mock_method.assert_called_once()
 
+def test_singleton():
+    myrage = Myrage()
+    myrage_2 = Myrage()
 
-
+    assert id(myrage) == id(myrage_2)
+    assert myrage is myrage_2
