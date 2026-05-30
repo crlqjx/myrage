@@ -180,6 +180,7 @@ class Myrage(Session):
             kill: kill the process if true otherwise terminate it
         """
 
+        logger.log.info("Stopping current myrage controller and any tor instances")
         for proc in psutil.process_iter():
             if proc.name() == "tor":
                 proc.terminate() if kill is False else proc.kill()
