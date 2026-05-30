@@ -197,3 +197,10 @@ class Myrage(Session):
         logger.log.info("Deleting myrage controller and tor instances")
         self._controller.close()
         self._tor_process.kill()
+
+    def __enter__(self):
+        self.__call__()
+        return self
+
+    def __exit__(self, exception_type, exception_value, exception_traceback):
+        self.stop()
