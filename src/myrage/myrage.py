@@ -139,6 +139,10 @@ class Myrage(Session):
     def _check_existing_tor_processes(self):
         """Check and kill existing tor processes before starting one"""
 
+        if hasattr(self, "_tor_process"):
+            logger.log.info('Terminating existing instance of myrage')
+            self._tor_process.terminate()
+
         for proc in psutil.process_iter():
             try:
                 if proc.name() == "tor":
