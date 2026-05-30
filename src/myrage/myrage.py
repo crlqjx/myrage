@@ -2,7 +2,6 @@
 
 import psutil
 import time
-import socket
 
 from stem.process import launch_tor_with_config
 from stem.control import Controller
@@ -10,7 +9,6 @@ from stem import Signal
 
 from requests import Session
 from requests.adapters import Retry, HTTPAdapter
-from urllib3.connection import HTTPConnection
 
 from myrage import (
     logger,
@@ -43,7 +41,7 @@ class Myrage(Session):
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
-            cls._instance = super().__new__(cls, *args, **kwargs)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(
@@ -155,6 +153,8 @@ class Myrage(Session):
                     break
             except psutil.NoSuchProcess as unknown_process_error:
                 logger.log.warning(unknown_process_error)
+
+        time.sleep(1)
 
     def renew_ip(self):
         """Renew IP """

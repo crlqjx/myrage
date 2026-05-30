@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "myrage"
-version = "0.0.23"
+version = "0.0.24"
 description = "A simple class to instanciate a tor process and run http requests behind it"
 authors = [
 	{ name = "Cyril Quijoux" }
